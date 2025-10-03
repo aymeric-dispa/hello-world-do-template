@@ -6,6 +6,7 @@
 
 This is a [Durable Object](https://developers.cloudflare.com/durable-objects/). It comes with a `sayHello` method that returns the number of times a specific durable object has been called.
 Each unique `id` passed in the request's query parameter routes to a distinct Durable Object instance, which uses its own private, persistent storage to maintain the counter.
+As explained in the doc 'Durable Objects do not currently change locations after they are created1. By default, a Durable Object is instantiated in a data center close to where the initial get() request is made. This may not be in the same data center that the get() request is made from, but in most cases, it will be in close proximity.'.
 
 
 <!-- dash-content-end -->
