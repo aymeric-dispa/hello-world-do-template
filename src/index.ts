@@ -33,10 +33,18 @@ export class MyDurableObject extends DurableObject<Env> {
    * @returns The greeting to be sent back to the Worker
    */
   async sayHello(): Promise<string> {
-    let result = this.ctx.storage.sql
-      .exec("SELECT 'Hello, World!' as greeting")
-      .one() as { greeting: string };
-    return result.greeting;
+    let count = (await this.ctx.storage.get<number>("callCount")) ?? 0;
+
+    // Step 2: Increment the count.
+    count++;
+
+    // Step 3: Save the new count back to persistent storage.
+    // We use `ctx.waitUntil` to do this in the background without blocking
+    // the response to the user, making it more efficient.
+    this.ctx.waitUntil(this.ctx.storage.put("callCount", count));
+
+    // Step 4: Return the message with the new count.
+    return `This function has been called ${count} time(s).`;
   }
 }
 
@@ -54,16 +62,19 @@ export default {
     // class. The name of class is used to identify the Durable Object.
     // Requests from all Workers to the instance named
     // will go to a single globally unique Durable Object instance.
-    const id: DurableObjectId = env.MY_DURABLE_OBJECT.idFromName(
-      new URL(request.url).pathname,
-    );
 
-    // Create a stub to open a communication channel with the Durable
-    // Object instance.
+
+    // 3. (Important) Check if the ID was actually provided
+
+
+    const idFromQuery = new URL(request.url).searchParams.get("id");
+     if (!idFromQuery) {
+      return new Response("Error: The 'id' query parameter is required.", { status: 400 });
+    }
+    const id: DurableObjectId = env.MY_DURABLE_OBJECT.idFromName(idFromQuery);
+
     const stub = env.MY_DURABLE_OBJECT.get(id);
 
-    // Call the `sayHello()` RPC method on the stub to invoke the method on
-    // the remote Durable Object instance
     const greeting = await stub.sayHello();
 
     return new Response(greeting);
