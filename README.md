@@ -4,7 +4,9 @@
 
 <!-- dash-content-start -->
 
-This is a [Durable Object](https://developers.cloudflare.com/durable-objects/) starter template. It comes with a `sayHello` method that returns `Hello World!`.
+This is a [Durable Object](https://developers.cloudflare.com/durable-objects/). It comes with a `sayHello` method that returns the number of times a specific durable object has been called.
+Each unique `id` passed in the request's query parameter routes to a distinct Durable Object instance, which uses its own private, persistent storage to maintain the counter.
+
 
 <!-- dash-content-end -->
 
