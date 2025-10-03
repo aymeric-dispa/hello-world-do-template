@@ -33,8 +33,18 @@ export class MyDurableObject extends DurableObject<Env> {
    * @returns The greeting to be sent back to the Worker
    */
   async sayHello(): Promise<string> {
+    
+
+    this.ctx.storage.sql.exec(`CREATE TABLE IF NOT EXISTS artist(
+      artistid    INTEGER PRIMARY KEY,
+      artistname  TEXT
+    );INSERT INTO artist (artistid, artistname) VALUES
+      (123, 'Alice'),
+      (456, 'Bob'),
+      (789, 'Charlie');`);
+
     let result = this.ctx.storage.sql
-      .exec("SELECT 'Hello, World!' as greeting")
+      .exec("SELECT * from artist")
       .one() as { greeting: string };
     return result.greeting;
   }
