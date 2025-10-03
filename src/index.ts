@@ -33,10 +33,17 @@ export class MyDurableObject extends DurableObject<Env> {
    * @returns The greeting to be sent back to the Worker
    */
   async sayHello(): Promise<string> {
-    let result = this.ctx.storage.sql
-      .exec("SELECT 'Hello, World!' as greeting")
-      .one() as { greeting: string };
-    return result.greeting;
+    // 1. Get the current count, defaulting to 0 if it doesn't exist.
+    let count = (await this.ctx.storage.get<number>("callCount")) ?? 0;
+
+    // 2. Increment the count.
+    count++;
+
+    // 3. Save the new count back to storage in the background.
+    this.ctx.waitUntil(this.ctx.storage.put("callCount", count));
+
+    // 4. Return the user-facing message.
+    return `This endpoint has been called ${count} time(s).`;
   }
 }
 
@@ -50,12 +57,17 @@ export default {
    * @returns The response to be sent back to the client
    */
   async fetch(request, env, ctx): Promise<Response> {
-    // Create a `DurableObjectId` for an instance of the `MyDurableObject`
-    // class. The name of class is used to identify the Durable Object.
-    // Requests from all Workers to the instance named
-    // will go to a single globally unique Durable Object instance.
+
+     const url = new URL(request.url);
+    const sessionId = url.searchParams.get("id");
+
+    // If no 'id' query parameter is provided, return a 404 error.
+    if (!sessionId) {
+      return new Response("Not Found: An 'id' query parameter is required.", { status: 404 });
+    }
+
     const id: DurableObjectId = env.MY_DURABLE_OBJECT.idFromName(
-      new URL(request.url).pathname,
+      sessionId
     );
 
     // Create a stub to open a communication channel with the Durable

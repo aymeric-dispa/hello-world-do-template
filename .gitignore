@@ -170,3 +170,8 @@ dist
 
 .dev.vars
 .wrangler/
+
+
+# history
+
+.history/
